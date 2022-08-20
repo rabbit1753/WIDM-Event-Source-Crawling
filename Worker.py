@@ -23,18 +23,28 @@ class Agent(mp.Process):
         round_idx = 1
         action = job_assignment()
         first_round = True
-        while not frontier.threshold(): # score x probability < 一個值
+        while not frontier.discriminate(): # score x probability < 一個值
             if not first_round:              
-                action = frontier.pop()
+                action = frontier.return_link()
             else:   
                 first_round = False
             page = crawler(action)
             page_reward = event_source_estimator.XXXX(page)
             if page_reward > 0.7:   # 隨便設的門檻，若大於門檻值就加入到event_source_url
                 event_source_url.append(action)
-            feature_vector = feature_extraction(page)
-            frontier.push(feature_vector)
-            state = frontier.trans2state() 
+
+            links, feature_vector = feature_extraction(page)
+            old_feature_vector = frontier.return_feature()
+            state_ = feature_vector + old_feature_vector
+            probability, score = self.local_actor_critic.forward(state_)
+            
+            link_list = []
+            for l, f, p, s in zip(links,feature_vector,probability,score):
+                tmp = []
+                tmp.append(l,f,p,s)
+                link_list.append(tmp)
+
+            frontier.push(link_list)
             self.local_actor_critic.remember(state, action, page_reward)
             print('Round ',round_idx,'reward %.1f' % page_reward)
             
