@@ -31,36 +31,6 @@ def CleanString(string):
     cleantext = cleantext.replace('\xa0', '')
     return cleantext
 
-def Embedding(output):
-    bertlayer = hub.KerasLayer(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                                      "bert_multi_cased_L-12_H-768_A-12_4")), trainable=False)
-    output = pad_sequences(output, maxlen = 10, dtype = np.int32, padding = 'post', truncating = 'post', value = 0)
-    fea_embed = bertlayer({"input_word_ids": output, "input_mask": np.ones(shape = output.shape, dtype=np.int32),
-                                   "input_type_ids": np.zeros(shape=output.shape, dtype=np.int32)})[
-        "pooled_output"].numpy()
-
-    return fea_embed
-
-
-url = "https://youth.tycg.gov.tw/home.jsp?id=10472&parentpath=0,10415"
-pagesource = Crawler.web_contain(url)
-sp = bs(pagesource, "html.parser")
-
-textlist = []
-check = 0
-
-a_all = sp.find_all('a', attrs={'href': re.compile("")})
-
-# get all anchor text
-# haven't exclude js route
-for item in a_all :
-    text = CleanString(item.text)
-    if text != '':
-        textlist.append(text)
-        
-# anchor tokenize
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 def AnchorTokenize(textlist):
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),'vocab.txt')
     tokenizer = FullTokenizer(vocab_file=path, do_lower_case=True)
@@ -73,9 +43,38 @@ def AnchorTokenize(textlist):
         output.append(tmp)
     return output
 
-token = AnchorTokenize(textlist)
+def Embedding(output):
+    bertlayer = hub.KerasLayer(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                                      "bert_multi_cased_L-12_H-768_A-12_4")), trainable=False)
+    output = pad_sequences(output, maxlen = 10, dtype = np.int32, padding = 'post', truncating = 'post', value = 0)
+    fea_embed = bertlayer({"input_word_ids": output, "input_mask": np.ones(shape = output.shape, dtype=np.int32),
+                                   "input_type_ids": np.zeros(shape=output.shape, dtype=np.int32)})[
+        "pooled_output"].numpy()
 
-bertE = Embedding(token)
+    return fea_embed
+
+
+def conclu(pagesource) :
+    sp = bs(pagesource, "html.parser")
+    
+    textlist = []
+    check = 0
+    
+    a_all = sp.find_all('a', attrs={'href': re.compile("")})
+    
+    # get all anchor text
+    # haven't exclude js route
+    for item in a_all :
+        text = CleanString(item.text)
+    if text != '':
+        textlist.append(text)
+            
+    # anchor tokenize
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+    token = AnchorTokenize(textlist)
+
+    bertE = Embedding(token)
 
 
 
