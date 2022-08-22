@@ -8,9 +8,9 @@ from torch.nn import functional as F
 
 class ShareAdam(torch.optim.Adam):
     def __init__(self, params, lr=0.001,  betas=(0.9, 0.99), eps=1e-8, weight_decay=0):
-        super(SharedAdam, self).__init__(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay) #explain what is going on here
+        super(ShareAdam, self).__init__(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay) #explain what is going on here
 
-        for group in self.params_groups:
+        for group in self.param_groups:
             for p in group['params']:
                 state = self.state[p]
                 state['step'] = 0
@@ -18,7 +18,7 @@ class ShareAdam(torch.optim.Adam):
                 state['exp_avg_sq'] = torch.zeros_like(p.data)
 
                 state['exp_avg'].share_memory_()
-                state['exp_abg_sq'].share_memory_()
+                state['exp_avg_sq'].share_memory_()
 
 class ActorCritic(nn.Module):
     def __init__(self, input_dims, n_links, gamma = 0.9):
@@ -27,20 +27,25 @@ class ActorCritic(nn.Module):
         self.gamma = gamma
 
         self.actor_layer1 = nn.Linear(input_dims, 128)
-        self.actor_layer = nn.Linear(128, n_links)
+        self.actor_layer = nn.Linear(128, 1)
         
         self.critic_layer1 = nn.Linear(input_dims, 128)
-        self.crtitc_layer = nn.Linear(128, n_links)   
+        self.crtitc_layer = nn.Linear(128, 1)   
 
         self.rewards = []
         self.links = []
         self.state = []
-    
-    def forward(self, state, count):
-        actor_layer1 = F.relu(self.actor_layer1(state[count]))
-        probability = self.actor_layer(actor_layer1) #dont discuss with other link,so use sigmoid
         
-        critic_layer1 = F.relu(self.critic_layer1(state[count]))
+    def forward(self, state):
+        print("執行過forward")
+        print(state.shape)
+        actor_layer1 = F.relu(self.actor_layer1(state))
+        # probability = self.actor_layer(actor_layer1)
+        probability = torch.sigmoid(self.actor_layer(actor_layer1)) #dont discuss with other link,so use sigmoid
+        print("執行過這裡")
+        # critic_layer1 = F.relu(self.critic_layer1(state[count]))
+        critic_layer1 = F.relu(self.critic_layer1(state))
+        # score = self.critic_layer(critic_layer1)
         scores = torch.sigmoid(self.crtitc_layer(critic_layer1))
         
         return probability, scores
@@ -56,6 +61,7 @@ class ActorCritic(nn.Module):
         self.state = []
 
     def calc_R(self, done):   #done from event estimator #要改
+        print("執行過reward")
         state = torch.tensor(self.states, dtype = torch.float)
         _,  value= self.forward(state)
 
@@ -69,6 +75,7 @@ class ActorCritic(nn.Module):
         return reward_record
     
     def calc_loss(self, done): #cal loss function  #要改
+        print("執行過loss")
         state = torch.tensor(self.states, dtype=torch.float)
         #actions = torch.tensor(self.actions, dtype=torch.float)
 

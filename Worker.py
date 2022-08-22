@@ -1,15 +1,23 @@
 import numpy as np
+import json
 import random
 import torch as t
 import torch.nn as nn
+import torch.multiprocessing as mp
 from torch.nn import functional as F
 import matplotlib.pyplot as plt
-import event_source_estimator
+from Global_Network import ActorCritic
+import Crawler.FeaEx as FeaEx
+import Crawler.Crawler as crawler
+import job_assignment as job
+import URL_Frontier_code
+import requests 
 
 event_source_url = []
+frontier = URL_Frontier_code.URL_Frontier()
 
 class Agent(mp.Process):
-    def __init__(self, global_actor_critic, optimizer):
+    def __init__(self, input_dims, global_actor_critic, optimizer, n_links, gamma):
         super(Agent, self).__init__()
 
         self.local_actor_critic = ActorCritic(input_dims, n_links, gamma)
@@ -20,33 +28,62 @@ class Agent(mp.Process):
 
     def run(self):  # state = 這一輪的 frontier 的 vector， action = 下一輪預計決定點擊的 link 的 vector，
                             # reward = 這一輪 page 所得到 reward(由 event source estiamtor 來評估)
-        round_idx = 1
-        action = job_assignment()
+        round_idx = 20
+        action = job.job_assignment(round_idx)
         first_round = True
-        while not frontier.discriminate(): # score x probability < 一個值
+        print("我跑到A拉")
+        while True: # score x probability < 一個值
+            print("我跑到B拉")
             if not first_round:              
                 action = frontier.return_link()
             else:   
                 first_round = False
-            page = crawler(action)
-            page_reward = event_source_estimator.XXXX(page)
+            
+            print(action)
+            page = crawler.web_contain(action)
+
+            # print(action)
+            # # action = "https://kktix.com/"
+            # api_url = "http://140.115.54.45:8799/GetPageScore?url="
+            # api_url = api_url + action
+            # result = json.loads(requests.get(api_url).text)
+            # page_reward = float(result["score"])
+            # print("page reward：",page_reward)
+
+            page_reward = 0.6
+
             if page_reward > 0.7:   # 隨便設的門檻，若大於門檻值就加入到event_source_url
                 event_source_url.append(action)
 
-            links, feature_vector = feature_extraction(page)
+            feature_vector, links = FeaEx.conclu(page)
             old_feature_vector = frontier.return_feature()
-            state_ = feature_vector + old_feature_vector
-            probability, score = self.local_actor_critic.forward(state_)
-            
+            # print(old_feature_vector)
+            if old_feature_vector != []:
+                state_ = feature_vector + old_feature_vector
+            else:
+                state_ = feature_vector
+                
+            print(state_.shape)
+            # state_t = []
+            # for i in state_:
+            #     state_t.append(t.tensor(i))
+            state_t = t.from_numpy(state_) 
+            print("我跑到C拉")
+            print(type(state_t))
+            probability, score = self.local_actor_critic.forward(state_t)
+            print("我跑到D拉")
             link_list = []
             for l, f, p, s in zip(links,feature_vector,probability,score):
                 tmp = []
                 tmp.append(l,f,p,s)
                 link_list.append(tmp)
-
+            
             frontier.push(link_list)
             self.local_actor_critic.remember(state, action, page_reward)
             print('Round ',round_idx,'reward %.1f' % page_reward)
+
+            if frontier.discriminate() == False:
+                break
             
         loss = self.local_actor_critic.calc_loss()
         self.optimizer.zero_grad()  # 先清空上一輪的梯度為0
