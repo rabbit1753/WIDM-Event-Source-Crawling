@@ -59,7 +59,7 @@ def conclu(pagesource) :
     
     textlist = []
     vec = []
-    check = 0
+    depth = []
     
     a_all = sp.find_all('a', attrs={'href': re.compile("")})
     
@@ -67,27 +67,18 @@ def conclu(pagesource) :
     # haven't exclude js route
     for item in a_all :
         text = CleanString(item.text)
-    if text != '':
-        textlist.append(text)
-        
-    # get link list 
-    for link in a_all:
-        links = str(link.get("href"))
-        # if links[0] == '/':
-        #     links = url + links
-        vec.append(links)
-       # check if it's legel and not duplicate
-        # if links[:4] == "http":
-        #     for item in range(len(vec)):
-        #       if links == vec[item]:
-        #         check = 1
-        #         break
-        #     if check == 0:
-        #       vec.append(links) 
-        #     else:
-        #       check = 0
+        dom = []
+        if text != '':
+            links = str(item.get("href"))
+            if links[0] != "#" :
+                if links[0:11] != "javascript":
+                    for i in item.parents:
+                        if i.name != "[document]" :
+                            dom.append(i.name)
+                    depth.append(len(dom))
+                    vec.append(links)
+                    textlist.append(text)
 
-    
     # anchor tokenize
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -103,21 +94,5 @@ def conclu(pagesource) :
 
 
 
-# get dom path     
-
-# option = Options()
-# driver = webdriver.Chrome('./chromedriver', chrome_options = option)
-# driver.get(url)
-
-# content = driver.page_source
-# cleaner = clean.Cleaner() 
-# content = cleaner.clean_html(content)
-# doc = lh.fromstring(content)
-# print("/n 123/n")
-# print(doc)
-# print("/n 123/n")
-# body = driver.find_element(By.TAG_NAME, "body")
-
-# body.find_element(By.XPATH, '/*[' + str(x) + ']')
     
 
