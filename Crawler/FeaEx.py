@@ -17,7 +17,7 @@ except:
     from bert.tokenization import FullTokenizer
 
 
-import crawler
+import Crawler
 
 # import lxml.html as lh
 # import lxml.html.clean as clean
@@ -58,6 +58,7 @@ def conclu(pagesource) :
     sp = bs(pagesource, "html.parser")
     
     textlist = []
+    vec = []
     check = 0
     
     a_all = sp.find_all('a', attrs={'href': re.compile("")})
@@ -68,14 +69,32 @@ def conclu(pagesource) :
         text = CleanString(item.text)
     if text != '':
         textlist.append(text)
-            
+        
+    # get link list 
+    for link in a_all:
+        links = str(link.get("href"))
+        # if links[0] == '/':
+        #     links = url + links
+        vec.append(links)
+       # check if it's legel and not duplicate
+        # if links[:4] == "http":
+        #     for item in range(len(vec)):
+        #       if links == vec[item]:
+        #         check = 1
+        #         break
+        #     if check == 0:
+        #       vec.append(links) 
+        #     else:
+        #       check = 0
+
+    
     # anchor tokenize
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     token = AnchorTokenize(textlist)
-
     bertE = Embedding(token)
-
+    
+    return bertE, vec
 
 
 
