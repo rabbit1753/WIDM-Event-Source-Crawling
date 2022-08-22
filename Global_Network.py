@@ -9,9 +9,9 @@ from torch.distributions import Categorical
 
 class ShareAdam(torch.optim.Adam):
     def __init__(self, params, lr=0.001,  betas=(0.9, 0.99), eps=1e-8, weight_decay=0):
-        super(SharedAdam, self).__init__(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay) #explain what is going on here
+        super(ShareAdam, self).__init__(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay) #explain what is going on here
 
-        for group in self.params_groups:
+        for group in self.param_groups:
             for p in group['params']:
                 state = self.state[p]
                 state['step'] = 0
@@ -19,7 +19,7 @@ class ShareAdam(torch.optim.Adam):
                 state['exp_avg_sq'] = torch.zeros_like(p.data)
 
                 state['exp_avg'].share_memory_()
-                state['exp_abg_sq'].share_memory_()
+                state['exp_avg_sq'].share_memory_()
 
 class ActorCritic(nn.Module):
     def __init__(self, input_dims, n_links, gamma):
@@ -37,7 +37,7 @@ class ActorCritic(nn.Module):
         self.links = []
         self.state = [[]for i in range(10000)]
     
-    def forward(self, state):  #stste要從frontier所有links當states還是只把當前page的links當states
+    def forward(self, state):
         actor_layer1 = F.relu(self.actor_layer1(state))
         probability = torch.sigmoid(self.actor_layer(actor_layer1)) #dont discuss with other link,so use sigmoid
         
