@@ -6,6 +6,7 @@ Created on Sat Aug  6 10:01:03 2022
 """
 
 from sklearn import preprocessing
+import torch as t
 
 class URL_Frontier:
     def __init__( self ) :
@@ -17,7 +18,7 @@ class URL_Frontier:
         self.returned = ''
     def process_list( self , URL_list ) :
         #被呼叫函數，處理傳過來的list
-        URL_list = eval(URL_list)
+        # URL_list = eval(URL_list)
         
         for val in URL_list :
             self.url_probability[ val[0] ] = val[1]
@@ -28,17 +29,19 @@ class URL_Frontier:
 
     def discriminate( self ) :
         
-        score_list = preprocessing.scale(list(self.url_probability.values()))
+        # score_list = preprocessing.scale(list(self.url_probability.values()))
+        score_list = list(self.url_probability.values())
         """
         對probability 做normzlization
         將數據按其屬性(按列進行)減去其均值，然後除以其方差。
-        最後得到的結果是，對每個屬性/每列來說所有數據都聚集在0附近，方差值為1。
+        最後得到的結果是，對每個屬性/每列來說所有數據都聚集在0附近，方差值為1
         """
         for key,score_value in zip(self.url_probability.keys() , score_list) :
             self.fin_score[ key ] = float(self.url_probability[ key ]) * float(score_value)
         
         self.returned = max(self.fin_score, key=self.fin_score.get)
-        if self.fin_score[ self.returned ] >= 0.7 :
+        print(self.fin_score[ self.returned ])
+        if self.fin_score[ self.returned ] >= 0.1 :
             #大於門檻值0.7會回傳True
            return True
         return False

@@ -67,9 +67,8 @@ def conclu(pagesource) :
     # haven't exclude js route
     for item in a_all :
         text = CleanString(item.text)
-    if text != '':
-        textlist.append(text)
-        
+        if text != '':
+            textlist.append(text)
     # get link list 
     for link in a_all:
         links = str(link.get("href"))
