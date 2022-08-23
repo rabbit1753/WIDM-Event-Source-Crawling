@@ -75,10 +75,16 @@ class ActorCritic(nn.Module):
     
     def calc_loss(self): #cal loss function  #要改
         print("執行過loss")
-        print(self.state)
-        for i in self.state:
-            if type(i) == np.ndarray:
-                print("hello world")
+
+        temp = []
+        for i in range(len(self.state[0][0])):
+            temp.append(0)
+        temp = torch.tensor(temp)
+        temp = torch.unsqueeze(temp,0)
+        for i in range(len(self.state)-1):
+            for j in range(len(self.state[i]),len(self.state[-1])):
+                self.state[0] = torch.cat((self.state[i],temp),0)
+        
         state = torch.tensor([item.detach().numpy() for item in self.state])
 
         reward = self.calc_R(state)
