@@ -5,7 +5,7 @@ import torch.multiprocessing as mp
 if __name__ == '__main__':
 
     lr = 1e-4
-    input_dims = 768
+    input_dims = [768]
     n_links = 20
     gamma = 0.8
     global_actor_critic = ActorCritic(input_dims, n_links, gamma)
@@ -21,5 +21,6 @@ if __name__ == '__main__':
                     optim,
                     n_links,
                     gamma,)]
-    [w.start() for w in workers]
-    [w.join() for w in workers]
+    workers[0].run()
+    # [w.start() for w in workers]
+    # [w.join() for w in workers]

@@ -28,10 +28,9 @@ class Agent(mp.Process):
 
     def run(self):  # state = 這一輪的 frontier 的 vector， action = 下一輪預計決定點擊的 link 的 vector，
                             # reward = 這一輪 page 所得到 reward(由 event source estiamtor 來評估)
-        round_idx = 20
+        round_idx = 1
         action = job.job_assignment(round_idx)
         first_round = True
-        print("我跑到A拉")
         while True: # score x probability < 一個值
             print("我跑到B拉")
             if not first_round:              
@@ -57,9 +56,9 @@ class Agent(mp.Process):
 
             feature_vector, links = FeaEx.conclu(page)
             old_feature_vector = frontier.return_feature()
-            # print(old_feature_vector)
+            # print(old_feature_vector,feature_vector)
             if old_feature_vector != []:
-                state_ = feature_vector + old_feature_vector
+                state_ = np.concatenate([old_feature_vector,feature_vector])
             else:
                 state_ = feature_vector
                 
@@ -67,22 +66,26 @@ class Agent(mp.Process):
             # state_t = []
             # for i in state_:
             #     state_t.append(t.tensor(i))
+            print(type(state_))
             state_t = t.from_numpy(state_) 
             print("我跑到C拉")
-            print(type(state_t))
+            
             probability, score = self.local_actor_critic.forward(state_t)
             print("我跑到D拉")
             link_list = []
             for l, f, p, s in zip(links,feature_vector,probability,score):
                 tmp = []
-                tmp.append(l,f,p,s)
+                tmp.append(l)
+                tmp.append(p)
+                tmp.append(s)
+                tmp.append(f)
                 link_list.append(tmp)
             
-            frontier.push(link_list)
-            self.local_actor_critic.remember(state, action, page_reward)
+            frontier.process_list(link_list)
+            self.local_actor_critic.record_episode(page_reward, action, state_t)
             print('Round ',round_idx,'reward %.1f' % page_reward)
-
-            if frontier.discriminate() == False:
+            round_idx += 1
+            if frontier.discriminate() == False or round_idx == 3:
                 break
             
         loss = self.local_actor_critic.calc_loss()

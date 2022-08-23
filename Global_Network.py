@@ -25,11 +25,10 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
 
         self.gamma = gamma
-
-        self.actor_layer1 = nn.Linear(input_dims, 128)
+        self.actor_layer1 = nn.Linear(*input_dims, 128)
         self.actor_layer = nn.Linear(128, 1)
         
-        self.critic_layer1 = nn.Linear(input_dims, 128)
+        self.critic_layer1 = nn.Linear(*input_dims, 128)
         self.crtitc_layer = nn.Linear(128, 1)   
 
         self.rewards = []
@@ -38,7 +37,7 @@ class ActorCritic(nn.Module):
         
     def forward(self, state):
         print("執行過forward")
-        print(state.shape)
+        # print(state.shape)
         actor_layer1 = F.relu(self.actor_layer1(state))
         # probability = self.actor_layer(actor_layer1)
         probability = torch.sigmoid(self.actor_layer(actor_layer1)) #dont discuss with other link,so use sigmoid
@@ -60,12 +59,12 @@ class ActorCritic(nn.Module):
         self.links = []
         self.state = []
 
-    def calc_R(self, done):   #done from event estimator #要改
+    def calc_R(self, state):   #done from event estimator #要改
         print("執行過reward")
-        state = torch.tensor(self.states, dtype = torch.float)
+        # state = torch.from_numpy(np.asarray(self.state))
         _,  value= self.forward(state)
 
-        award = value[-1]*(1-int(done))  #dont know how to handle ,maybe game characteristic
+        award = value[-1]  #dont know how to handle ,maybe game characteristic
 
         reward_record = []
         for reward in self.rewards[::-1]:
@@ -74,12 +73,15 @@ class ActorCritic(nn.Module):
         
         return reward_record
     
-    def calc_loss(self, done): #cal loss function  #要改
+    def calc_loss(self): #cal loss function  #要改
         print("執行過loss")
-        state = torch.tensor(self.states, dtype=torch.float)
-        #actions = torch.tensor(self.actions, dtype=torch.float)
+        print(self.state)
+        for i in self.state:
+            if type(i) == np.ndarray:
+                print("hello world")
+        state = torch.tensor([item.detach().numpy() for item in self.state])
 
-        reward = self.calc_R(done)
+        reward = self.calc_R(state)
 
         _ , critic = self.forward(state)
         acc = critic.squeeze()
