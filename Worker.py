@@ -55,23 +55,11 @@ class Agent(mp.Process):
                 event_source_url.append(action)
 
             feature_vector, links = FeaEx.conclu(page)
-            old_feature_vector = frontier.return_feature()
-            # print(old_feature_vector,feature_vector)
-            if old_feature_vector != []:
-                state_ = np.concatenate([old_feature_vector,feature_vector])
-            else:
-                state_ = feature_vector
-                
-            print(state_.shape)
-            # state_t = []
-            # for i in state_:
-            #     state_t.append(t.tensor(i))
-            print(type(state_))
+            state_ = feature_vector
             state_t = t.from_numpy(state_) 
-            print("我跑到C拉")
-            
             probability, score = self.local_actor_critic.forward(state_t)
-            print("我跑到D拉")
+            print("產生狀態、連結、機率、分數")
+            
             link_list = []
             for l, f, p, s in zip(links,feature_vector,probability,score):
                 tmp = []
@@ -83,7 +71,7 @@ class Agent(mp.Process):
             
             frontier.process_list(link_list)
             self.local_actor_critic.record_episode(page_reward, action, state_t)
-            print('Round ',round_idx,'reward %.1f' % page_reward)
+            print('Round:',round_idx,'reward %.1f' % page_reward)
             round_idx += 1
             if frontier.discriminate() == False or round_idx == 3:
                 break

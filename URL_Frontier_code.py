@@ -7,6 +7,7 @@ Created on Sat Aug  6 10:01:03 2022
 
 from sklearn import preprocessing
 import torch as t
+import numpy as np
 
 class URL_Frontier:
     def __init__( self ) :
