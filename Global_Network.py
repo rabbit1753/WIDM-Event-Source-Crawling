@@ -98,17 +98,26 @@ class ActorCritic(nn.Module):
         actor , critic = self.forward(state)
         predict = critic.squeeze() 
         acc = torch.reshape(acc, (acc.shape[0],acc.shape[1]))
-
-        critic_loss = (acc - predict)**2
+        acc_use = []
+        predict_use = []
+        for i in range(len(actions)):
+            acc_use.append(acc[i][actions[i]])
+            predict_use.append(predict[i][actions[i]])
+        acc_use = torch.tensor(acc_use)
+        predict_use = torch.tensor(predict_use)
+        critic_loss = (acc_use - predict_use)**2
         # print(critic_loss)
 
         probs = torch.sigmoid(actor)
+        probs = probs.squeeze()
         dist = Categorical(probs)
         log_probs = dist.log_prob(actions)
-        actor_loss = -log_probs*(reward - values)
+        # acc = acc[0,2:4]
+        # predict = predict[0,2:4]
+        actor_loss = -log_probs*(acc_use - predict_use)
 
-        total_loss = critic_loss + actor_loss
-        print(total_loss)
+        total_loss = (critic_loss + actor_loss).mean()
+        print(actor_loss,critic_loss,total_loss)
         return total_loss
 
 if __name__=="__main__":
