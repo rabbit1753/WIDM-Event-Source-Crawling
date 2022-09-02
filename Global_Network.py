@@ -1,6 +1,5 @@
 """
 https://jovian.ai/tobiasschmidbauer1312/asynchronous-actor-to-critic-ac3
-https://darren1231.pixnet.net/blog/post/350072401-actor-critic-%E5%8E%9F%E7%90%86%E8%AA%AA%E6%98%8E
 """
 import numpy as np
 import torch
@@ -34,82 +33,98 @@ class ActorCritic(nn.Module):
         self.crtitc_layer = nn.Linear(128, 1)   
 
         self.rewards = []
-        self.links = []
+        self.actions = []
         self.state = []
+        self.count = []
         
     def forward(self, state):
-        print("執行過forward")
-
         actor_layer1 = F.relu(self.actor_layer1(state))
-        probability = torch.sigmoid(self.actor_layer(actor_layer1)) #dont discuss with other link,so use sigmoid
-        
+        probability = torch.sigmoid(self.actor_layer(actor_layer1))
+
         critic_layer1 = F.relu(self.critic_layer1(state))
         scores = torch.sigmoid(self.crtitc_layer(critic_layer1))
         
         return probability, scores
     
-    def record_episode(self, reward, link, feature):
+    def record_episode(self, reward, action, feature):
         self.rewards.append(reward)
-        self.links.append(link)
+        self.actions.append(action)
         self.state.append(feature)
 
     def clear_memory(self):
         self.rewards = []
-        self.links = []
+        self.actions = []
         self.state = []
+        self.count = []
 
-    def calc_R(self, state):   #done from event estimator #要改
+    def calc_R(self, state):
         print("執行過reward")
-        # state = torch.tensor(self.states, dtype=torch.float)
         _,  value= self.forward(state)
 
-        award = value[-1]  #dont know how to handle ,maybe game characteristic
+        award = value[-1]
 
         reward_record = []
         for reward in self.rewards[::-1]:
             award = reward + self.gamma*award
             reward_record.append(award)
-        
         return reward_record
-    
-    def calc_loss(self): #cal loss function  #要改
-        print("執行過loss")
+
+    def calc_loss(self):
         
         temp = []
-        ma = 0
+        maximum = 0
         for i in range(len(self.state[0][0])):
             temp.append(0)
         temp = torch.tensor(temp)
         temp = torch.unsqueeze(temp,0)
-        for i in range(len(self.state)):
+
+        for i in range(len(self.state)):  #尋找最長的 state 長度
             max_temp = len(self.state[i])
-            if ma < max_temp:
-                ma = max_temp
+            self.count.append(len(self.state[i]))
+            if maximum < max_temp:
+                maximum = max_temp
                 max_index = i
-        for i in range(len(self.state)):
+
+        for i in range(len(self.state)):  #為了讓每一輪的 state 長度一致
             if i == max_index:
                 continue
             for j in range(len(self.state[i]),len(self.state[max_index])):
                 self.state[i] = torch.cat((self.state[i],temp),0)
+
         state = torch.tensor([item.detach().numpy() for item in self.state])
-        
-        # actions = torch.tensor(self.actions, dtype=torch.float)
+        actions = torch.tensor(self.actions)
 
         acc = self.calc_R(state)
         acc = torch.tensor([item.detach().numpy() for item in acc])
         actor , critic = self.forward(state)
-        predict = critic.squeeze() 
+        predict = torch.reshape(critic, (critic.shape[0],critic.shape[1]))
         acc = torch.reshape(acc, (acc.shape[0],acc.shape[1]))
+        
+        print(self.count)
+        print(actions)
+        acc_use = []
+        predict_use = []
+        for i in range(len(actions)):
+            for j in range(len(self.count)):
+                if actions[i] > self.count[j]:
+                    actions[i] = actions[i] - self.count[j]
+                    continue
+                acc_use.append(acc[j][actions[i]])
+                predict_use.append(predict[j][actions[i]])
+                print(j, actions[i])
+                break
+        acc_use = torch.tensor(acc_use)
+        predict_use = torch.tensor(predict_use)
+        
+        critic_loss = (acc_use - predict_use)**2
 
-        critic_loss = (acc - predict)**2
-        print(critic_loss)
-        """
-        probs = torch.sigmod(actor, dim = 1)
+        probs = torch.sigmoid(actor)
+        probs = probs.squeeze()
         dist = Categorical(probs)
         log_probs = dist.log_prob(actions)
-        actor_loss = -log_probs*(acc - predict)
-        """
-        total_loss = critic_loss #+ actor_loss).mean()
+        actor_loss = -log_probs*(acc_use - predict_use)
+
+        total_loss = (critic_loss + actor_loss).mean()
         return total_loss
 
 if __name__=="__main__":
