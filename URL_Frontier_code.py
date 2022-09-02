@@ -17,16 +17,24 @@ class URL_Frontier:
         self.fin_score = {}
         self.feature = {} 
         self.returned = ''
+        self.f = []
+        self.recode_index = []
+
     def process_list( self , URL_list ) :
-        #被呼叫函數，處理傳過來的list
+        """
+        被呼叫函數，處理傳過來的list
+        """
         # URL_list = eval(URL_list)
-        
         for val in URL_list :
-            self.url_probability[ val[0] ] = val[1]
+            self.recode_index.append(val[0])
+
+            self.url_probability[val[0]] = val[1]
             
-            self.estimator_score[ val[0] ] = val[2] 
+            self.estimator_score[val[0]] = val[2] 
             
-            self.feature[ val[0] ] = val[3]  
+            self.feature[val[0]] = val[3]
+
+        return len(self.url_probability)
 
     def discriminate( self ) :
         
@@ -38,23 +46,21 @@ class URL_Frontier:
         最後得到的結果是，對每個屬性/每列來說所有數據都聚集在0附近，方差值為1
         """
         for key,score_value in zip(self.url_probability.keys() , score_list) :
-            self.fin_score[ key ] = float(self.url_probability[ key ]) * float(score_value)
+            self.fin_score[key] = float(self.url_probability[key]) * float(score_value)
         
         self.returned = max(self.fin_score, key=self.fin_score.get)
-        print(self.fin_score[ self.returned ])
-        if self.fin_score[ self.returned ] >= 0.1 :
+
+        if self.fin_score[self.returned] >= 0.2 and self.returned not in self.f:
+            self.f.append(self.returned)
             #大於門檻值0.7會回傳True
-           return True
+            return True
         return False
     
-    def return_link( self ) :        
-        
-        self.url_probability.pop( self.returned )
-        self.estimator_score.pop( self.returned )
-        self.fin_score.pop( self.returned )  
-        self.feature.pop( self.returned )  
-        
-        return self.returned
+    def return_LinkAndIndex( self ) :        
+        """
+        return link and index
+        """
+        return self.returned,self.recode_index.index(self.returned)
     
     def return_feature( self ):
         

@@ -35,6 +35,7 @@ class ActorCritic(nn.Module):
         self.rewards = []
         self.actions = []
         self.state = []
+        self.count = 182
         
     def forward(self, state):
         actor_layer1 = F.relu(self.actor_layer1(state))
@@ -101,8 +102,9 @@ class ActorCritic(nn.Module):
         acc_use = []
         predict_use = []
         for i in range(len(actions)):
-            acc_use.append(acc[i][actions[i]])
-            predict_use.append(predict[i][actions[i]])
+            acc_use.append(acc[i][actions[i] - self.count])
+            predict_use.append(predict[i][actions[i] - self.count])
+            self.count += len(acc[i])
         acc_use = torch.tensor(acc_use)
         predict_use = torch.tensor(predict_use)
         critic_loss = (acc_use - predict_use)**2
@@ -112,8 +114,6 @@ class ActorCritic(nn.Module):
         probs = probs.squeeze()
         dist = Categorical(probs)
         log_probs = dist.log_prob(actions)
-        # acc = acc[0,2:4]
-        # predict = predict[0,2:4]
         actor_loss = -log_probs*(acc_use - predict_use)
 
         total_loss = (critic_loss + actor_loss).mean()

@@ -30,12 +30,11 @@ class Agent(mp.Process):
         stop = 4
         while self.episode_idx < stop:
             round_idx = 1
-            seed = job.job_assignment(round_idx)
+            seed = job.job_assignment(self.episode_idx)
             first_round = True
             while True: # score x probability < 一個值
                 if not first_round:              
-                    action = frontier.return_link()
-                    a_index = round_idx+2
+                    action, a_index = frontier.return_LinkAndIndex()
                 else:   
                     action = seed
                 
@@ -60,15 +59,17 @@ class Agent(mp.Process):
                     tmp.append(f)
                     link_list.append(tmp)
                 print(len(link_list))
-                frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
+                l = frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
+                print(l)
                 if not first_round: # page_reward 這一輪點選的 page 是1分還是0分、a_index 是點選的 page 的 url_index
                     self.local_actor_critic.record_episode(page_reward, a_index, state_t) # state_t 是這一個 page 所有可點 link 的 feature 態
                     print('Round:',round_idx,'reward %.1f' % page_reward)
             
-                first_round = False
+                
                 round_idx += 1
-                if frontier.discriminate() == False or round_idx == 10:
+                if (frontier.discriminate() == False or round_idx == 10) and first_round != True:
                     break
+                first_round = False
                 
             loss = self.local_actor_critic.calc_loss()
             self.optimizer.zero_grad()  # 先清空上一輪的梯度為0
@@ -81,5 +82,9 @@ class Agent(mp.Process):
             self.optimizer.step()   # 更新梯度
             self.local_actor_critic.load_state_dict(self.global_actor_critic.state_dict()) # 複製 global 參數 到 local 去
             self.local_actor_critic.clear_memory()
+
+            self.episode_idx += 1
+
+
             
 
