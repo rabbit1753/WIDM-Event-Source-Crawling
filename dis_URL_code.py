@@ -10,7 +10,7 @@ with open('train.csv', newline='') as csvfile:
       url_dic[row[0]] = row[1]
 
 def dis_URL( seed , URL) :
-  if URL in url_dic[seed] :
+  if URL in url_dic[seed] and URL!= seed:
     return True
   else : 
     return False
