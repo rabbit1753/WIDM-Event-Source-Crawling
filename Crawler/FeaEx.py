@@ -74,6 +74,8 @@ def conclu(pagesource) :
         links = str(link.get("href"))
         # if links[0] == '/':
         #     links = url + links
+        if links[:4] != "http":
+            continue
         vec.append(links)
        # check if it's legel and not duplicate
         # if links[:4] == "http":

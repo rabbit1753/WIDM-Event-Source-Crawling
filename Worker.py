@@ -15,7 +15,7 @@ import requests
 import dis_URL_code
 
 event_source_url = []
-frontier = URL_Frontier_code.URL_Frontier()
+# frontier = URL_Frontier_code.URL_Frontier()
 
 class Agent(mp.Process):
     def __init__(self, input_dims, global_actor_critic, optimizer, n_links, gamma):
@@ -27,20 +27,28 @@ class Agent(mp.Process):
         self.optimizer = optimizer
 
     def run(self):
-        stop = 4
+        stop = 30
         while self.episode_idx < stop:
+            print("It is",self.episode_idx,"episode.")
             round_idx = 1
-            seed = job.job_assignment(self.episode_idx)
+            seed = job.job_assignment(self.episode_idx+20)
             first_round = True
+            frontier = URL_Frontier_code.URL_Frontier()
             while True: # score x probability < 一個值
                 if not first_round:              
                     action, a_index = frontier.return_LinkAndIndex()
+                    print(a_index)
                 else:   
                     action = seed
+                    print('\nRound:',round_idx,',No page reward')
                 
                 print(action)
                 page = crawler.web_contain(action)
                 page_reward = dis_URL_code.dis_URL(seed, action)
+
+                if not first_round:
+                    self.local_actor_critic.record_episode(page_reward, a_index, state_t) # state_t 是這一個 page 所有可點 link 的 feature 態
+                    print('Round:',round_idx,'reward %.1f' % page_reward)
 
                 if page_reward > 0.7:   # 隨便設的門檻，若大於門檻值就加入到event_source_url
                     event_source_url.append(action)
@@ -60,14 +68,9 @@ class Agent(mp.Process):
                     link_list.append(tmp)
                 print(len(link_list))
                 l = frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
-                print(l)
-                if not first_round: # page_reward 這一輪點選的 page 是1分還是0分、a_index 是點選的 page 的 url_index
-                    self.local_actor_critic.record_episode(page_reward, a_index, state_t) # state_t 是這一個 page 所有可點 link 的 feature 態
-                    print('Round:',round_idx,'reward %.1f' % page_reward)
-            
-                
+                    
                 round_idx += 1
-                if (frontier.discriminate() == False or round_idx == 10) and first_round != True:
+                if (frontier.discriminate() == False or page_reward == 1) and first_round != True:
                     break
                 first_round = False
                 
@@ -84,7 +87,3 @@ class Agent(mp.Process):
             self.local_actor_critic.clear_memory()
 
             self.episode_idx += 1
-
-
-            
-
