@@ -10,6 +10,7 @@ import os
 import re
 import numpy as np
 import os
+import urllib.parse
 from bert import tokenization
 try:
     from bert.tokenization.bert_tokenization import FullTokenizer
@@ -54,7 +55,7 @@ def Embedding(output):
     return fea_embed
 
 
-def conclu(pagesource) :
+def conclu(pagesource, base) :
     sp = bs(pagesource, "html.parser")
     
     textlist = []
@@ -71,11 +72,13 @@ def conclu(pagesource) :
         if text != '':
             links = str(item.get("href"))
             if links[0] != "#" :
-                if links[0:11] != "javascript":
+                if links[0:10] != "javascript":
                     for i in item.parents:
                         if i.name != "[document]" :
                             dom.append(i.name)
                     depth.append(len(dom))
+                    if links[0:4] != 'http':
+                        links = urllib.parse.urljoin(base, links)
                     vec.append(links)
                     textlist.append(text)
 
