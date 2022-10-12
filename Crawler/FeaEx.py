@@ -33,7 +33,7 @@ def CleanString(string):
     return cleantext
 
 def AnchorTokenize(textlist):
-    path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),'vocab.txt')
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),'WIDM-Event-Source-Crawling/Crawler/vocab.txt')
     tokenizer = FullTokenizer(vocab_file=path, do_lower_case=True)
     sep_id = int(np.array([tokenizer.convert_tokens_to_ids(["[SEP]"])])[0])
     cls_id = int(np.array([tokenizer.convert_tokens_to_ids(["[CLS]"])])[0])
@@ -68,6 +68,7 @@ def conclu(pagesource, base) :
     # haven't exclude js route
     for item in a_all :
         text = CleanString(item.text)
+
         dom = []
         if text != '':
             links = str(item.get("href"))
