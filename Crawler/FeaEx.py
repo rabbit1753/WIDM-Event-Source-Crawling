@@ -2,6 +2,7 @@
 # bs to dom tree struct to  ?
 # python sucks
 
+from asyncio.windows_events import NULL
 import tensorflow as tf
 import tensorflow_hub as hub
 from bs4 import BeautifulSoup as bs
@@ -72,16 +73,18 @@ def conclu(pagesource, base) :
         dom = []
         if text != '':
             links = str(item.get("href"))
-            if links[0] != "#" :
-                if links[0:10] != "javascript":
-                    for i in item.parents:
-                        if i.name != "[document]" :
-                            dom.append(i.name)
-                    depth.append(len(dom))
-                    if links[0:4] != 'http':
-                        links = urllib.parse.urljoin(base, links)
-                    vec.append(links)
-                    textlist.append(text)
+            if links != "":
+                # print("links in FeaEx",links)
+                if  links[0] != "#" :
+                    if links[0:10] != "javascript":
+                        for i in item.parents:
+                            if i.name != "[document]" :
+                                dom.append(i.name)
+                        depth.append(len(dom))
+                        if links[0:4] != 'http':
+                            links = urllib.parse.urljoin(base, links)
+                        vec.append(links)
+                        textlist.append(text)
 
     # anchor tokenize
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'

@@ -4,10 +4,10 @@ import multiprocessing as mp
 
 if __name__ == '__main__':
 
-    lr = 1e-4
+    lr = 1e-1
     input_dims = [768]
     n_links = 20
-    gamma = 0.8
+    gamma = 0.7
     global_actor_critic = ActorCritic(input_dims, n_links, gamma)
     global_actor_critic.share_memory()
     optim = ShareAdam(global_actor_critic.parameters(), lr=lr, betas=(0.92, 0.999))
@@ -17,7 +17,7 @@ if __name__ == '__main__':
                     optim,
                     n_links,
                     gamma,
-                    ) for i in range(mp.cpu_count()//6)]
+                    ) for i in range(mp.cpu_count()//12)]
 
 
     # workers = [Agent(input_dims,global_actor_critic,

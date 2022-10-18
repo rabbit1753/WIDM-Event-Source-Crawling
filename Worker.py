@@ -13,6 +13,7 @@ import job_assignment as job
 import URL_Frontier_code
 import requests 
 import dis_URL_code
+import random
 
 event_source_url = []
 # frontier = URL_Frontier_code.URL_Frontier()
@@ -27,23 +28,28 @@ class Agent(mp.Process):
         self.optimizer = optimizer
 
     def run(self):
-        stop = 30
+        stop = 50
         while self.episode_idx < stop:
             print("It is",self.episode_idx,"episode.")
             round_idx = 1
-            seed = job.job_assignment(self.episode_idx+20)
+            rand = random.randint(1, 800)
+            seed = job.job_assignment(rand)
             first_round = True
             frontier = URL_Frontier_code.URL_Frontier()
             while True: # score x probability < 一個值
                 if not first_round:              
                     action, a_index = frontier.return_LinkAndIndex()
-                    print(a_index)
+                    # print(a_index)
                 else:   
                     action = seed
                     print('\nRound:',round_idx,',No page reward')
                 
                 print(action)
                 page = crawler.web_contain(action)
+                while page == False:
+                    action, a_index = frontier.return_LinkAndIndex()
+                    page = crawler.web_contain(action)
+                
                 page_reward = dis_URL_code.dis_URL(seed, action)
 
                 if not first_round:
@@ -53,7 +59,7 @@ class Agent(mp.Process):
                 if page_reward > 0.7:   # 隨便設的門檻，若大於門檻值就加入到event_source_url
                     event_source_url.append(action)
 
-                feature_vector, links = FeaEx.conclu(page)
+                feature_vector, links = FeaEx.conclu(page,seed)
                 state_ = feature_vector
                 state_t = t.from_numpy(state_) 
                 probability, score = self.local_actor_critic.forward(state_t)
@@ -66,11 +72,14 @@ class Agent(mp.Process):
                     tmp.append(s)
                     tmp.append(f)
                     link_list.append(tmp)
-                print(len(link_list))
-                l = frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
+                print("Size of link lists",len(link_list))
+                try:
+                    frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
+                except:
+                    print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
                     
                 round_idx += 1
-                if (frontier.discriminate() == False or page_reward == 1) and first_round != True:
+                if ((frontier.discriminate() == False or page_reward == 1) and first_round != True) or round_idx >= 10:
                     break
                 first_round = False
                 

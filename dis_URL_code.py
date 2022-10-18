@@ -1,6 +1,6 @@
 import csv
 url_dic = {}
-with open('train.csv', newline='') as csvfile:
+with open('TESW.csv', newline='') as csvfile:
   rows = csv.reader(csvfile)
 
   for row in rows :

@@ -8,7 +8,7 @@ from torch.nn import functional as F
 from torch.distributions import Categorical
 
 class ShareAdam(torch.optim.Adam):
-    def __init__(self, params, lr=0.001,  betas=(0.9, 0.99), eps=1e-8, weight_decay=0):
+    def __init__(self, params, lr=0.01,  betas=(0.9, 0.99), eps=1e-8, weight_decay=0):
         super(ShareAdam, self).__init__(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay) #explain what is going on here
 
         for group in self.param_groups:
@@ -22,15 +22,17 @@ class ShareAdam(torch.optim.Adam):
                 state['exp_avg_sq'].share_memory_()
 
 class ActorCritic(nn.Module):
-    def __init__(self, input_dims, n_links, gamma = 0.9):
+    def __init__(self, input_dims, n_links, gamma = 0.7):
         super(ActorCritic, self).__init__()
 
         self.gamma = gamma
-        self.actor_layer1 = nn.Linear(*input_dims, 128)
-        self.actor_layer = nn.Linear(128, 1)
+        self.actor_layer1 = nn.Linear(*input_dims, 256)
+        self.actor_layer2 = nn.Linear(256, 256)
+        self.actor_layer = nn.Linear(256, 1)
         
-        self.critic_layer1 = nn.Linear(*input_dims, 128)
-        self.crtitc_layer = nn.Linear(128, 1)   
+        self.critic_layer1 = nn.Linear(*input_dims, 256)
+        self.crtitc_layer2 = nn.Linear(256, 256)
+        self.crtitc_layer = nn.Linear(256, 1)   
 
         self.rewards = []
         self.actions = []
@@ -39,10 +41,12 @@ class ActorCritic(nn.Module):
         
     def forward(self, state):
         actor_layer1 = F.relu(self.actor_layer1(state))
-        probability = torch.sigmoid(self.actor_layer(actor_layer1))
+        actor_layer2 = F.relu(self.actor_layer2(actor_layer1))
+        probability = torch.sigmoid(self.actor_layer(actor_layer2))
 
         critic_layer1 = F.relu(self.critic_layer1(state))
-        scores = torch.sigmoid(self.crtitc_layer(critic_layer1))
+        critic_layer2 = F.relu(self.crtitc_layer2(critic_layer1))
+        scores = torch.sigmoid(self.crtitc_layer(critic_layer2))
         
         return probability, scores
     
@@ -127,10 +131,10 @@ class ActorCritic(nn.Module):
         print(total_loss)
         return total_loss
 
-if __name__=="__main__":
-    lr = 1e-4
-    #example
-    state = [[[0.25,0.67],[0.44,0.11]],[[0.43,0.69],[0.25,0.67],[0.44,0.11]]]
-    input_dims = 2
-    n_links = 1
-    global_actor_critic = ActorCritic(input_dims ,n_links)
+# if __name__=="__main__":
+#     lr = 1e-4
+#     #example
+#     state = [[[0.25,0.67],[0.44,0.11]],[[0.43,0.69],[0.25,0.67],[0.44,0.11]]]
+#     input_dims = 2
+#     n_links = 1
+#     global_actor_critic = ActorCritic(input_dims ,n_links)

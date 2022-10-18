@@ -3,7 +3,7 @@ import csv
 import pandas as pd
 
 def job_assignment(count):
-    seed = pd.read_csv('train.csv')
+    seed = pd.read_csv('TESW.csv')
     link = seed['Event Message Page URL']
     if count >= len(link):
         print("no seed to crawling")

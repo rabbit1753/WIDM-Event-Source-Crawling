@@ -23,8 +23,8 @@ class URL_Frontier:
             self.Frontier['probability'].append(val[1])
             self.Frontier['score'].append(val[2])
             self.Frontier['feature'].append(val[3])
-
-        self.Frontier['fin_score']= [float(x)*float(y) for x,y in zip(self.Frontier['probability'],self.Frontier['score'])]
+        
+        self.Frontier['fin_score']= [float(x) for x in self.Frontier['probability']]
         for key,fin_score_value in zip(self.Frontier['url'] , self.Frontier['fin_score']) :
             self.pop_dict[key] = fin_score_value
             
