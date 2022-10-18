@@ -38,6 +38,7 @@ class URL_Frontier:
             self.pop_dict.pop( self.returned )
             self.returned = max(self.pop_dict, key = self.pop_dict.get)
         print(self.pop_dict[self.returned])
+        print("")
         if self.pop_dict[self.returned] >= 0.2:
             self.f.append(self.returned)
             #大於門檻值0.7會回傳True

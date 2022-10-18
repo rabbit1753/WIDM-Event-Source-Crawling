@@ -26,13 +26,14 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
 
         self.gamma = gamma
-        self.actor_layer1 = nn.Linear(*input_dims, 256)
-        self.actor_layer2 = nn.Linear(256, 256)
-        self.actor_layer = nn.Linear(256, 1)
+        self.hid_dim = 64
+        self.actor_layer1 = nn.Linear(*input_dims, self.hid_dim)
+        self.actor_layer2 = nn.Linear(self.hid_dim, self.hid_dim)
+        self.actor_layer = nn.Linear(self.hid_dim, 1)
         
-        self.critic_layer1 = nn.Linear(*input_dims, 256)
-        self.crtitc_layer2 = nn.Linear(256, 256)
-        self.crtitc_layer = nn.Linear(256, 1)   
+        self.critic_layer1 = nn.Linear(*input_dims, self.hid_dim)
+        self.crtitc_layer2 = nn.Linear(self.hid_dim, self.hid_dim)
+        self.crtitc_layer = nn.Linear(self.hid_dim, 1)   
 
         self.rewards = []
         self.actions = []
@@ -70,6 +71,7 @@ class ActorCritic(nn.Module):
         for reward in self.rewards[::-1]:
             award = reward + self.gamma*award
             reward_record.append(award)
+        # print("reward_record",reward_record)
         return reward_record
 
     def calc_loss(self):
@@ -118,6 +120,8 @@ class ActorCritic(nn.Module):
                 break
         acc_use = torch.tensor(acc_use)
         predict_use = torch.tensor(predict_use)
+        print("predict_use",predict_use)
+        print("acc_use",acc_use)
         
         critic_loss = (acc_use - predict_use)**2
 

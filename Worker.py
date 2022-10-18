@@ -30,7 +30,7 @@ class Agent(mp.Process):
     def run(self):
         stop = 50
         while self.episode_idx < stop:
-            print("It is",self.episode_idx,"episode.")
+            # print("It is",self.episode_idx,"episode.")
             round_idx = 1
             rand = random.randint(1, 800)
             seed = job.job_assignment(rand)
@@ -46,6 +46,7 @@ class Agent(mp.Process):
                 
                 print(action)
                 page = crawler.web_contain(action)
+                print("page[0]")
                 while page == False:
                     action, a_index = frontier.return_LinkAndIndex()
                     page = crawler.web_contain(action)
@@ -73,10 +74,7 @@ class Agent(mp.Process):
                     tmp.append(f)
                     link_list.append(tmp)
                 print("Size of link lists",len(link_list))
-                try:
-                    frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
-                except:
-                    print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
+                frontier.process_list(link_list) # 把這一輪 page 的 link 的各項資訊加入 frontier
                     
                 round_idx += 1
                 if ((frontier.discriminate() == False or page_reward == 1) and first_round != True) or round_idx >= 10:
