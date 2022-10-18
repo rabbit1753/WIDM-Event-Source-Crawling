@@ -46,8 +46,8 @@ class Agent(mp.Process):
                 
                 print(action)
                 page = crawler.web_contain(action)
-                print("page[0]")
                 while page == False:
+                    frontier.discriminate()
                     action, a_index = frontier.return_LinkAndIndex()
                     page = crawler.web_contain(action)
                 

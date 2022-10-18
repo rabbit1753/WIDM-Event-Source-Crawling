@@ -43,11 +43,11 @@ class ActorCritic(nn.Module):
     def forward(self, state):
         actor_layer1 = F.relu(self.actor_layer1(state))
         actor_layer2 = F.relu(self.actor_layer2(actor_layer1))
-        probability = torch.sigmoid(self.actor_layer(actor_layer2))
+        probability = torch.tanh(self.actor_layer(actor_layer2))
 
         critic_layer1 = F.relu(self.critic_layer1(state))
         critic_layer2 = F.relu(self.crtitc_layer2(critic_layer1))
-        scores = torch.sigmoid(self.crtitc_layer(critic_layer2))
+        scores = torch.tanh(self.crtitc_layer(critic_layer2))
         
         return probability, scores
     

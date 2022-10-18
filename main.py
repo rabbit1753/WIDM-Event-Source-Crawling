@@ -17,7 +17,7 @@ if __name__ == '__main__':
                     optim,
                     n_links,
                     gamma,
-                    ) for i in range(mp.cpu_count()//6)]
+                    ) for i in range(mp.cpu_count()//4)]
 
 
     # workers = [Agent(input_dims,global_actor_critic,
