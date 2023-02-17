@@ -1,5 +1,4 @@
 # WIDM-Event-Source-Crawling
-一個練習用的小專案
+小專案
 
-目前的 code 幾乎都在各自的 branch
-要查看的話要去看各 branch，應該測試完成才會合併到 main 去
+就由 Reinforcement Learning 來訓練一個網路，希望能快速的點擊到目標網站
